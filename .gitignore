@@ -2,6 +2,7 @@
 /build.properties
 /scons.bat
 /scons.sh
+/site_scons/site_init.py
 
 # Ignore all files in the targets folders.
 /targets/
