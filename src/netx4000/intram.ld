@@ -11,7 +11,7 @@ SECTIONS
 {
 	.assert_empty (NOLOAD) :
 	{
-		/* NOTE: include all sections here whioch should be empty.
+		/* NOTE: include all sections here which should be empty.
 		 */
 		*(.data)
 		*(.bss)

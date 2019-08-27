@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<HBootImage type="REGULAR">
+
+  <!-- Set the ASIC_CTRL Registers IO_CONFIG, IO_CONFIG2 and CLOCK_ENABLE (write Values to LLRAM) -->
+  <Chunks>
+    <Data>
+      <Concat address="0x04000000">   <!-- LLRAM START -->
+        <UInt32>
+          0x00000000,  <!-- IO CONFIG  0xf4080100 -->
+          0x00000000,  <!-- IO CONFIG2 0xf4080108 NO MII -->
+          0x00400000   <!-- CLOCK_ENABLE 0xf4080138 DPM Clock needs to be activated to use #HIF_RDY Pin (p.e. HIF_SDRAM_#CS) -->
+        </UInt32>
+      </Concat>
+    </Data>
+
+    <Snip artifact="apply_asic_ctrl" group="com.hilscher.hw.util.netx4000" version="1.0.1">
+      <Parameter name="PTR_INPUT">0x04000000</Parameter>
+    </Snip>
+  </Chunks>
+</HBootImage>

@@ -1,4 +1,24 @@
 # -*- coding: utf-8 -*-
+#-------------------------------------------------------------------------#
+#   Copyright (C) 2016 by Christoph Thelen                                #
+#   doc_bacardi@users.sourceforge.net                                     #
+#                                                                         #
+#   This program is free software; you can redistribute it and/or modify  #
+#   it under the terms of the GNU General Public License as published by  #
+#   the Free Software Foundation; either version 2 of the License, or     #
+#   (at your option) any later version.                                   #
+#                                                                         #
+#   This program is distributed in the hope that it will be useful,       #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#   GNU General Public License for more details.                          #
+#                                                                         #
+#   You should have received a copy of the GNU General Public License     #
+#   along with this program; if not, write to the                         #
+#   Free Software Foundation, Inc.,                                       #
+#   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
+#-------------------------------------------------------------------------#
+
 
 #----------------------------------------------------------------------------
 #
@@ -16,7 +36,7 @@ env_cortexR7.CreateCompilerEnv('NETX4000', ['arch=armv7', 'thumb'], ['arch=armv7
 #
 # Create the compiler environments.
 #
-astrIncludePaths = ['src', '#platform/src', '#platform/src/lib', '#targets/version']
+astrIncludePaths = ['src']
 
 atEnv.NETX4000.Append(CPPPATH = astrIncludePaths)
 
@@ -26,6 +46,7 @@ atEnv.NETX4000.Append(CPPPATH = astrIncludePaths)
 # Get the source code version from the VCS.
 #
 atEnv.DEFAULT.Version('#targets/version/version.h', 'templates/version.h')
+atEnv.DEFAULT.Version('#targets/hboot_snippet.xml', 'templates/hboot_snippet.xml')
 
 
 #----------------------------------------------------------------------------
@@ -40,11 +61,12 @@ SConscript('platform/SConscript')
 # This is the list of sources. The elements must be separated with whitespace
 # (i.e. spaces, tabs, newlines). The amount of whitespace does not matter.
 sources = """
-	src/netx4000/init.S
+  src/netx4000/init.S
 """
 
 
 #----------------------------------------------------------------------------
+global PROJECT_VERSION
 #
 # Build all files.
 #
@@ -55,3 +77,31 @@ src_netx4000_cr7_llram = env_netx4000_cr7_llram.SetBuildPath('targets/netx4000_c
 elf_netx4000_cr7_llram = env_netx4000_cr7_llram.Elf('targets/netx4000_cr7_llram/apply_asic_ctrl_netx4000.elf', src_netx4000_cr7_llram + env_netx4000_cr7_llram['PLATFORM_LIBRARY'])
 txt_netx4000_cr7_llram = env_netx4000_cr7_llram.ObjDump('targets/netx4000_cr7_llram/apply_asic_ctrl_netx4000.txt', elf_netx4000_cr7_llram, OBJDUMP_FLAGS=['--disassemble', '--source', '--all-headers', '--wide'])
 bin_netx4000_cr7_llram = env_netx4000_cr7_llram.ObjCopy('targets/netx4000_cr7_llram/apply_asic_ctrl_netx4000.bin', elf_netx4000_cr7_llram)
+
+gccSymbols_netx4000_cr7_llram = env_netx4000_cr7_llram.GccSymbolTemplate('targets/netx4000_cr7_llram/snippet.xml', elf_netx4000_cr7_llram, GCCSYMBOLTEMPLATE_TEMPLATE='targets/hboot_snippet.xml',  GCCSYMBOLTEMPLATE_BINFILE=bin_netx4000_cr7_llram[0])
+# Create the snippet from the parameters.
+aArtifactGroupReverse4000 = ['com', 'hilscher', 'hw', 'util', 'netx4000']
+atSnippet4000 = {
+    'group': '.'.join(aArtifactGroupReverse4000),
+    'artifact': 'apply_asic_ctrl',
+    'version': PROJECT_VERSION,
+    'vcs_id': env_netx4000_cr7_llram.Version_GetVcsIdLong(),
+    'vcs_url': env_netx4000_cr7_llram.Version_GetVcsUrl(),
+    'license': 'GPL-2.0',
+    'author_name': 'Muhkuh team',
+    'author_url': 'https://github.com/muhkuh-sys',
+    'description': 'configure special asic_ctrl register at netX4000.',
+    'categories': ['netx4000', 'booting'],
+    'parameter': {
+        'PTR_INPUT': {'help': 'Pointer to the new asic_ctrl register values.'}
+    }
+
+}
+strArtifactPath4000 = 'targets/snippets/%s/%s/%s' % ('/'.join(aArtifactGroupReverse4000), atSnippet4000['artifact'], PROJECT_VERSION)
+snippet_netx4000_com = env_netx4000_cr7_llram.HBootSnippet('%s/%s-%s.xml' % (strArtifactPath4000, atSnippet4000['artifact'], PROJECT_VERSION), gccSymbols_netx4000_cr7_llram, PARAMETER=atSnippet4000)
+
+# Create the POM file.
+tPOM4000 = env_netx4000_cr7_llram.POMTemplate('%s/%s-%s.pom' % (strArtifactPath4000, atSnippet4000['artifact'], PROJECT_VERSION), 'templates/pom.xml', POM_TEMPLATE_GROUP=atSnippet4000['group'], POM_TEMPLATE_ARTIFACT=atSnippet4000['artifact'], POM_TEMPLATE_VERSION=atSnippet4000['version'], POM_TEMPLATE_PACKAGING='xml')
+
+# Create binaries for verification
+hboot_netx4000_test02 = env_netx4000_cr7_llram.HBootImage('targets/verify/test02/test_snippet_netx4000_apply_asic_ctrl.bin', 'verify/test02/test_snippet_netx4000_apply_asic_ctrl.xml')
