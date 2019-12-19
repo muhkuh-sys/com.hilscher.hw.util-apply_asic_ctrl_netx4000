@@ -36,6 +36,7 @@ start:
 	ldr    r1, =Addr_ASIC_CTRL
 
 	@START IOCONFIG
+  @overwrite register content with new value
 	
 	ldr    r2, [r0, #0] 
 	
@@ -46,16 +47,9 @@ start:
 	str    r2, [r1, #REL_Addr_io_config]
 	
 	@START IOCONFIG2
+  @overwrite register content with new value
 		
-	ldr    r2, [r0, #4] 
-	
-	
-	@ldr    r3, [r1, #REL_Addr_io_config2]
-	@AND NOT R3 = R3 and not R4
-	@BIC    r3, r3, #MSK_NX4000_io_config2_sel_xm10_mii
-	@BIC    r3, r3, #MSK_NX4000_io_config2_sel_xm11_mii
-	@orr    r2,r2,r3
-	
+	ldr    r2, [r0, #4]
 	
 	@@ Required to open access mode to special protected register
 	ldr    r3, [r1, #REL_Adr_NX4000_asic_ctrl_access_key]
@@ -64,10 +58,12 @@ start:
 	str    r2, [r1, #REL_Addr_io_config2]
 	
 	@START CLOCK_ENABLE
+    @set additional bits inside the register
 		
-	ldr    r2, [r0, #8] 
-	ldr    r3, [r1, #REL_Addr_clock_enable]
-	
+	ldr    r2, [r0, #8]
+  
+  @ read current register value and do a binary OR operation
+	ldr    r3, [r1, #REL_Addr_clock_enable]	
 	orr    r2,r2,r3
 	
 	
